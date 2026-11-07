@@ -55,13 +55,17 @@ public partial class MainWindow
         MeterSettings s = _gateSettings;
         bool dummy = _dummyHeader && !_dummyCardHidden;
         bool atDummy = DateTime.Now - _lastDummyHit < TimeSpan.FromSeconds(20); // hitting a dummy opens the meter at once, a parse or not
-        if (_overlayBossShown || _dummyHeader || atDummy)
+        // a boss fight or the own PvP opens it only with lines to show (7 November 2026, a tester: it opened empty in the siege and while farming - a boss hit
+        // nearby by others, nothing counted of the own)
+        bool lines = _rows.Count > 0;
+        bool pvp = DateTime.Now - _lastPvpFight < BossFightHold;
+        if (((_overlayBossShown || pvp) && lines) || _dummyHeader || atDummy)
         {
             _overlayHadFight = true;
         }
 
-        bool open = !s.MeterFoldIdle || _dummyHeader || atDummy || _overlayHadFight || s.MeterGrind || _overlayBuffs || _overlayStagger || _historyMode || _pvpOnly
-            || _overlayBossShown || _overlayPinned;
+        bool open = !s.MeterFoldIdle || _dummyHeader || atDummy || (_overlayHadFight && lines) || s.MeterGrind || _overlayBuffs || _overlayStagger || _historyMode || _pvpOnly
+            || (_overlayBossShown && lines) || _overlayPinned;
         Show(OverlayBody, open);
         Show(OverlayDummyCard, dummy);
         Show(CompactOverlayRowsArea, !dummy);

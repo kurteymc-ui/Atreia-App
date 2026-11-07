@@ -305,6 +305,7 @@ public static class Aion2Tickets
             Characters.Clear();
             _current = null;
             _likely = null;
+            _lastListed = null;
             _awaitingName = false;
             _pending = null;
             _pendingAt = default;
@@ -815,6 +816,9 @@ public static class Aion2Tickets
 
     private static int _likelyServerId;
 
+    /// <summary>The names of the last character list: the characters of the server picked at the selection.</summary>
+    private static HashSet<string>? _lastListed;
+
     /// <summary>The character most likely in game when the meter starts while one already is (its last saved record): the changes that come
     /// (a mission handed in, a purchase of Odyle energy) go to it until a live record names the character (<see cref="NoteCharacter"/> replaces it).
     /// Without it they were dropped and the checklist stayed at the login value. It is only a guess for those changes: <see cref="CurrentName"/> stays empty.</summary>
@@ -903,6 +907,22 @@ public static class Aion2Tickets
                 Characters[name] = known with { ServerId = serverId > 0 ? serverId : known.ServerId, Level = level > 0 ? level : known.Level };
                 _dirty = true;
             }
+
+            // The character list holds the characters of the server picked at the selection (another server's are not in it), but the server id its entries
+            // carry is the one a character was made on: after a transfer or a merge it names the old server (the owner's list of 7 November: YIELD 2309,
+            // logged in on 2302). The login names the server played on now: it is every listed character's.
+            if (serverId > 0 && _lastListed is { } listedNow && listedNow.Contains(name))
+            {
+                foreach (string other in listedNow)
+                {
+                    if (Characters.TryGetValue(other, out TicketCharacter? on) && on.ServerId != serverId)
+                    {
+                        Characters[other] = on with { ServerId = serverId };
+                        _dirty = true;
+                        changed = true;
+                    }
+                }
+            }
         }
 
         if (changed)
@@ -920,13 +940,14 @@ public static class Aion2Tickets
         lock (Gate)
         {
             var names = new HashSet<string>(listed.Select(c => c.Name), StringComparer.Ordinal);
+            _lastListed = names;
             foreach (AccountCharacter c in listed)
             {
                 if (Characters.TryGetValue(c.Name, out TicketCharacter? known))
                 {
                     TicketCharacter updated = known with
                     {
-                        ServerId = c.ServerId > 0 ? c.ServerId : known.ServerId,
+                        ServerId = known.ServerId > 0 ? known.ServerId : c.ServerId, // the list's is the server it was made on: the login's stays (see NoteCharacter)
                         Level = c.Level > 0 ? c.Level : known.Level,
                         Account = account ?? known.Account,
                         ClassCode = c.ClassCode,

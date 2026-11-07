@@ -200,6 +200,9 @@ public partial class MainWindow : Window
     /// <summary>The last moment anyone nearby fought a boss (a catalog boss: dungeon or field): the meter shows itself for that, not for every mob.</summary>
     private DateTime _lastBossFight = DateTime.MinValue;
 
+    /// <summary>When the own character last hit another player or was hit by one: PvP, counted and shown in the open world too for a while after.</summary>
+    private DateTime _lastPvpFight = DateTime.MinValue;
+
     /// <summary>The own character's last hit on a boss or by one (see <see cref="PopUpForBoss"/>); a minute without one, and the next is a new boss fight.</summary>
     private DateTime _lastOwnBossFight = DateTime.MinValue;
     private static readonly TimeSpan NewBossFightAfter = TimeSpan.FromMinutes(1);
@@ -1700,7 +1703,7 @@ public partial class MainWindow : Window
         }
 
         DateTime now = DateTime.Now;
-        return InInstanceNow() || now - _lastBossFight < BossFightHold || now - _lastDummyHit < TimeSpan.FromSeconds(20)
+        return InInstanceNow() || now - _lastBossFight < BossFightHold || now - _lastPvpFight < BossFightHold || now - _lastDummyHit < TimeSpan.FromSeconds(20)
             || _dummy?.Model.State is DummyState.Armed or DummyState.Running;
     }
 
@@ -1794,6 +1797,21 @@ public partial class MainWindow : Window
                         PopUpForBoss();
                     }
 
+                    break;
+                }
+            }
+        }
+
+        // the own character fighting another player (it hit one, or one hit it): PvP is counted wherever it happens, the Abyss too (7 November 2026, a
+        // tester: the fights against the other side there were missing while the open world was off)
+        if (directory.LocalPlayerId is int me and >= 0)
+        {
+            foreach (DamageEvent ev in events)
+            {
+                if (!ev.IsHeal && ev.SourceObjectId != ev.TargetObjectId
+                    && ((ev.SourceObjectId == me && directory.IsKnownPlayer(ev.TargetObjectId)) || (ev.TargetObjectId == me && directory.IsKnownPlayer(ev.SourceObjectId))))
+                {
+                    _lastPvpFight = DateTime.Now;
                     break;
                 }
             }
@@ -8565,8 +8583,29 @@ public partial class MainWindow : Window
     {
         _overlayUserWidth = double.IsFinite(width) && width > 0 ? Math.Clamp(width, MinOverlayWidth, MaxOverlayWidth) : 0;
         CompactOverlayPanel.Width = CompactOverlayWidth(_meterLook);
-        CompactOverlayRowsArea.Height = double.IsFinite(rowsHeight) && rowsHeight > 0 ? Math.Clamp(rowsHeight, MinOverlayRowsHeight, MaxOverlayRowsHeight) : double.NaN;
+        _overlayRowsCap = double.IsFinite(rowsHeight) && rowsHeight > 0 ? Math.Clamp(rowsHeight, MinOverlayRowsHeight, MaxOverlayRowsHeight) : 0;
         FitMeterLines();
+        FitRowsArea();
+    }
+
+    /// <summary>The most lines the meter grows to before it cuts the lowest rates off.</summary>
+    private const int MaxMeterLines = 10;
+
+    /// <summary>The height the player dragged the lines to: the most they take (0: none set).</summary>
+    private double _overlayRowsCap;
+
+    /// <summary>
+    /// The lines take as much room as there are lines, up to ten (or less when the player dragged it shorter), and give it back as they go (7 November 2026,
+    /// the owner: a meter dragged tall opened as a tall empty box in the Abyss; "let it extend naturally the more players that appear, capped at 10 and then
+    /// go back to its normal size"). Before, a dragged height was a fixed one, full or empty.
+    /// </summary>
+    private void FitRowsArea()
+    {
+        double fit = CompactOverlayRows.LayoutTransform is ScaleTransform small ? small.ScaleY : 1; // lines drawn smaller to fit a narrow meter
+        double titles = CompactOverlayTitles.Content is null ? 0 : (Math.Round(_meterLook.TinySize + 9) + 1) * fit;
+        double ten = titles + MaxMeterLines * (_meterLook.RowHeight + _meterLook.Gap) * fit + 2;
+        CompactOverlayRowsArea.Height = double.NaN;
+        CompactOverlayRowsArea.MaxHeight = _overlayRowsCap > 0 ? Math.Min(_overlayRowsCap, ten) : ten;
     }
 
     /// <summary>
@@ -8599,7 +8638,7 @@ public partial class MainWindow : Window
     {
         _resizeFrom = MouseOnScreen();
         _resizeWidth = CompactOverlayPanel.Width;
-        _resizeRowsHeight = double.IsNaN(CompactOverlayRowsArea.Height) ? CompactOverlayRowsArea.ActualHeight : CompactOverlayRowsArea.Height;
+        _resizeRowsHeight = CompactOverlayRowsArea.ActualHeight;
         _resizeScale = CompactOverlayScale.ScaleX;
     }
 
@@ -8616,7 +8655,7 @@ public partial class MainWindow : Window
 
         double scale = CompactOverlayScale.ScaleX;
         double rows = _resizeRowsHeight + moved.Y / scale;
-        SetCompactOverlaySize(_resizeWidth + moved.X / scale, Math.Abs(moved.Y) < 2 && double.IsNaN(CompactOverlayRowsArea.Height) ? 0 : rows);
+        SetCompactOverlaySize(_resizeWidth + moved.X / scale, Math.Abs(moved.Y) < 2 ? _overlayRowsCap : rows);
     }
 
     /// <summary>A double-click on the grip: the meter's own width and height again (its scale stays).</summary>
@@ -8633,7 +8672,7 @@ public partial class MainWindow : Window
         settings.OverlayScale = CompactOverlayScale.ScaleX;
         settings.OverlayWidth = _overlayUserWidth;
         settings.OverlayExtraWidth = 0; // the old way, read once (OverlayWidth)
-        settings.OverlayRowsHeight = double.IsNaN(CompactOverlayRowsArea.Height) ? 0 : CompactOverlayRowsArea.Height;
+        settings.OverlayRowsHeight = _overlayRowsCap;
         settings.Save();
     }
 

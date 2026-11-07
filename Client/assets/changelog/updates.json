@@ -6,6 +6,34 @@
   ],
   "versions": [
     {
+      "version": "1.20.65",
+      "date": "2026-11-07",
+      "headline": "All your characters, a meter that grows with the players, and PvP in the Abyss",
+      "items": [
+        {
+          "kind": "fixed",
+          "area": "Characters",
+          "title": "Every character of your server on the page",
+          "text": "A character made on another server and moved, or on a server that was merged, came with its old server, and the page left it out. The server you log in on now counts for every character on your list. Log in once to bring them back.",
+          "example": "Five characters on Beritra: all five show, whichever one you log in with."
+        },
+        {
+          "kind": "fixed",
+          "area": "Meter",
+          "title": "The meter grows with the players, up to ten lines",
+          "text": "The meter's lines take as much room as there are players, up to ten, and shrink back when they go. A height you dragged is now the most it takes, so it no longer opens as a tall empty box. It also no longer opens by itself with nothing to show.",
+          "example": "Three players: three lines. Twelve in a siege: ten lines, the best on top."
+        },
+        {
+          "kind": "new",
+          "area": "Meter",
+          "title": "PvP counted in the Abyss and the open world",
+          "text": "When you hit another player or one hits you, the fight is counted and shown wherever you are, the Abyss too, without switching on the open world.",
+          "example": "A fight against the other side in Lower Reshanta shows your damage and theirs."
+        }
+      ]
+    },
+    {
       "version": "1.20.64",
       "date": "2026-11-07",
       "headline": "Skill cooldowns that keep running while your buffs tick",

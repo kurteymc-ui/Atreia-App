@@ -37,6 +37,7 @@ public partial class MainWindow
         }
 
         FitMeterLines(); // the player's width stays: the lines fit themselves to it
+        FitRowsArea();   // and the lines' room follows the look's line height
 
         if (_overlayView is { } view)
         {

@@ -453,6 +453,15 @@ public static class SelfCheckTickets
         bool relog = Aion2Tickets.Snapshot().First(c => c.Name == "Draegor").Tickets.TryGetValue(Aion2Corridors.RefillId, out TicketValue stamp) && stamp.Count == 2
             && Aion2Corridors.Of(Of("Draegor"), Aion2Tickets.Snapshot(), window) is { Open: 2, From: null };
         bool home = Aion2Tickets.HomeServerId == 1304 && Aion2Tickets.OnHomeServer().Select(c => c.Name).OrderBy(n => n).SequenceEqual(new[] { "Draegor", "Nyxelle" });
+
+        // the character list carries the server a character was made on (on the owner's list of 7 November YIELD said 2309, logged in on 2302; a tester's
+        // fifth character went missing from the page): the login's server is every listed character's, and the next list does not move one back
+        Aion2Tickets.Reset();
+        AccountCharacter[] onList = { new("Kaivhan", 7, 2, 45, 2517, null, 0, 0, 2309, 205753), new("Elyndra", 13, 2, 45, 1485, null, 0, 0, 2302, 274283) };
+        Aion2Tickets.NoteListedCharacters("acct", onList);
+        Login("Elyndra", 2302, at.AddDays(1));
+        Aion2Tickets.NoteListedCharacters("acct", onList);
+        home &= Aion2Tickets.Snapshot().All(c => c.ServerId == 2302) && Aion2Tickets.OnHomeServer().Count == 2;
         Console.WriteLine($"  -> Abyss Corridors given out={given}, one entered={entered}, an alt of the server worked out and none for another server={alt}, none outside the window={outside}, a relog keeps them={relog}; only the server played on={home}");
         return given && entered && alt && outside && relog && home;
     }
