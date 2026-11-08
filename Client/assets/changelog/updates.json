@@ -6,6 +6,27 @@
   ],
   "versions": [
     {
+      "version": "1.20.66",
+      "date": "2026-11-08",
+      "headline": "Eternal Ludra: its attacks named in the callouts, and no stagger checks the game broke by itself",
+      "items": [
+        {
+          "kind": "new",
+          "area": "Boss timers",
+          "title": "Ludra's attacks named",
+          "text": "The game calls most of Eternal Ludra's attacks just \"Attack\". The ones with a clear effect now carry a name in the callouts and the fight report: Hits everyone, Stun, Knockdown, Airborne, Watch, and Despairing Aura / Chaos Aura. Purple Bolt, Ludra's Trial, Ure's Area and Supply Eldritch Energy keep the game's own names.",
+          "example": "At 70 % the line reads \"Hits everyone in 4 s\" instead of \"Attack in 4 s\"."
+        },
+        {
+          "kind": "fixed",
+          "area": "Stagger",
+          "title": "Ludra's bar is no stagger check",
+          "text": "Eternal Ludra's stagger bar never goes down from hits; the game breaks it by itself after Purple Bolt and after Ludra's Trial. The meter showed those as checks of three minutes that nobody had a part in. A bar that broke or ended with next to nothing taken off is no check any more. Abyssal Wings Ketu's checks are unchanged: its bar does go down from your hits.",
+          "example": "After a Ludra pull the Stagger view shows no checks instead of a three-minute \"broken\" one."
+        }
+      ]
+    },
+    {
       "version": "1.20.65",
       "date": "2026-11-07",
       "headline": "All your characters, a meter that grows with the players, and PvP in the Abyss",

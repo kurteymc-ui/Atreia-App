@@ -62,6 +62,9 @@ public static class StaggerChecks
     /// <summary>The bar rose by this share of it at once: it filled again.</summary>
     public const double RefillShare = 0.3;
 
+    /// <summary>Less than this share of the bar taken off: nobody broke it (a break then is the game's own).</summary>
+    public const double ScriptedShare = 0.01;
+
     /// <summary>A check without a cast whose last reading is this old has ended (the fight moved on, or ended, without a break).</summary>
     public static readonly TimeSpan Quiet = TimeSpan.FromSeconds(20);
 
@@ -145,7 +148,13 @@ public static class StaggerChecks
                 .Where(w => w.Actor == boss && w.DurationMs >= MechanicMs && w.At >= x.Start.AddSeconds(-3)
                     && (firstDrop is DateTime f ? w.At <= f.AddSeconds(0.5) : w.At <= x.Start.AddSeconds(1.5) || (x.Outcome == StaggerOutcome.Running && IsMechanic(w.SkillId) && w.At <= now)))
                 .OrderByDescending(w => w.At).Cast<WindupRecord?>().FirstOrDefault();
-            if (cast is { } learnt && firstDrop is not null)
+            // Next to nothing came off the bar (under 1 % of it): nobody broke it. Eternal Ludra's 5,625 bar sits full the whole fight and the game breaks it
+            // some 20 to 30 s after Purple Bolt (about 55 % health) and after Ludra's Trial (about 21 %) when the group lives through them (the owner's twelve
+            // pulls of 7 November 2026: never a point taken off by hits, at most 8 right after it filled again) - shown, that was a "broken" check of three
+            // minutes nobody had a part in.
+            int lowest = x.Readings.Where(r => !r.Broke).Select(r => r.Current).DefaultIfEmpty(x.Max).Min();
+            bool barely = x.Max - lowest < Math.Max(1, ScriptedShare * x.Max);
+            if (cast is { } learnt && firstDrop is not null && !barely)
             {
                 Learn(learnt.SkillId);
             }
@@ -160,9 +169,9 @@ public static class StaggerChecks
             DateTime? deadline = cast is { } cc ? cc.At.AddMilliseconds(cc.DurationMs) : null;
             // the bar sat full: no check - with a cast too, unless it is one known to start a check (Isolation Specialist Rahu's 15 s cast in Ludra comes
             // after its bar filled again, and hundreds of hits during it take nothing off: the boss can't be staggered then, there is nothing to break)
-            if (firstDrop is null && x.Outcome != StaggerOutcome.Broken && (cast is not { } shown || !IsMechanic(shown.SkillId)))
+            if (barely && (x.Outcome == StaggerOutcome.Broken || cast is not { } shown || !IsMechanic(shown.SkillId)))
             {
-                continue;
+                continue; // a break of the game's own (Ludra), or a bar that sat full: no check
             }
 
             if (x.Outcome == StaggerOutcome.Running)

@@ -272,6 +272,13 @@ public static class Aion2SkillNames
     /// <see cref="NameOf"/> but has its real name in the client), else <see cref="Display"/> of the English name.</summary>
     public static string DisplayOf(int skillId)
     {
+        // a boss attack the game calls only "Attack", named after what it does (assets/aion2/bosses/mechanic_names.json)
+        if (LoadMechanics().TryGetValue(skillId, out var mechanic)
+            && (mechanic.TryGetValue(Language, out string? named) || mechanic.TryGetValue("en", out named)) && !string.IsNullOrWhiteSpace(named))
+        {
+            return named;
+        }
+
         if (LoadLocalized().TryGetValue(skillId, out var names)
             && (names.TryGetValue(Language, out string? name) || names.TryGetValue("en", out name)) && !string.IsNullOrWhiteSpace(name))
         {
@@ -337,6 +344,45 @@ public static class Aion2SkillNames
         }
 
         _localized = table;
+        return table;
+    }
+
+    private static readonly string MechanicsPath = Path.Combine(AppContext.BaseDirectory, "assets", "aion2", "bosses", "mechanic_names.json");
+    private static IReadOnlyDictionary<int, Dictionary<string, string>>? _mechanics;
+
+    /// <summary>
+    /// Boss attacks the game names only "Attack", each named after what it did in recorded fights (assets/aion2/bosses/mechanic_names.json, 8 November
+    /// 2026: Eternal Ludra's raid-wide hits, stun, knockdown, Airborne, Watch, and Despairing/Chaos Aura). Only for the UI: <see cref="NameOf"/> stays the game's.
+    /// </summary>
+    private static IReadOnlyDictionary<int, Dictionary<string, string>> LoadMechanics()
+    {
+        if (_mechanics is { } cached)
+        {
+            return cached;
+        }
+
+        var table = new Dictionary<int, Dictionary<string, string>>();
+        try
+        {
+            if (File.Exists(MechanicsPath))
+            {
+                using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(MechanicsPath));
+                foreach (JsonProperty entry in doc.RootElement.GetProperty("names").EnumerateObject())
+                {
+                    if (int.TryParse(entry.Name, out int id))
+                    {
+                        table[id] = entry.Value.EnumerateObject().Where(n => n.Value.ValueKind == JsonValueKind.String)
+                            .ToDictionary(n => n.Name, n => n.Value.GetString() ?? "", StringComparer.Ordinal);
+                    }
+                }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or JsonException or KeyNotFoundException or InvalidOperationException)
+        {
+            // No table: the game's names.
+        }
+
+        _mechanics = table;
         return table;
     }
 

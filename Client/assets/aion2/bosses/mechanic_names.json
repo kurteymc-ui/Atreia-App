@@ -1,0 +1,101 @@
+{
+ "_note": "Names for boss attacks the game itself calls only 'Attack', shown by the meter (boss callouts, fight report). Each one is named after what it did in recorded fights ('seen'): the status the game puts on the players hit (its own name), or 'Hits everyone' when every player was hit. Attacks without a clear effect keep the game's name. Eternal Ludra: the owner's twelve pulls of 7 November 2026.",
+ "names": {
+  "1803170": {
+   "de": "Trifft alle",
+   "en": "Hits everyone",
+   "es": "Golpea a todos",
+   "fr": "Frappe tout le groupe",
+   "ja": "全員攻撃",
+   "ko": "전원 공격",
+   "pt": "Atinge todos",
+   "ru": "Удар по всем",
+   "zh": "全员攻击",
+   "zh-TW": "全員攻擊"
+  },
+  "1803450": {
+   "de": "Trifft alle",
+   "en": "Hits everyone",
+   "es": "Golpea a todos",
+   "fr": "Frappe tout le groupe",
+   "ja": "全員攻撃",
+   "ko": "전원 공격",
+   "pt": "Atinge todos",
+   "ru": "Удар по всем",
+   "zh": "全员攻击",
+   "zh-TW": "全員攻擊"
+  },
+  "1803451": {
+   "de": "Trifft alle",
+   "en": "Hits everyone",
+   "es": "Golpea a todos",
+   "fr": "Frappe tout le groupe",
+   "ja": "全員攻撃",
+   "ko": "전원 공격",
+   "pt": "Atinge todos",
+   "ru": "Удар по всем",
+   "zh": "全员攻击",
+   "zh-TW": "全員攻擊"
+  },
+  "1803250": {
+   "de": "Betäubung",
+   "en": "Stun",
+   "es": "Aturdimiento",
+   "fr": "Étourdissement",
+   "ja": "気絶",
+   "ko": "기절",
+   "pt": "Atordoamento",
+   "ru": "Оглушение"
+  },
+  "1803130": {
+   "de": "K. o.",
+   "en": "Knockdown",
+   "es": "Derribo",
+   "fr": "Renversement",
+   "ja": "転倒",
+   "ko": "넘어짐",
+   "pt": "Derrubada",
+   "ru": "Сбивание с ног"
+  },
+  "1803210": {
+   "de": "Luftbann",
+   "en": "Airborne",
+   "es": "Atadura aérea",
+   "fr": "Entrave aérienne",
+   "ja": "空中束縛",
+   "ko": "공중 속박",
+   "pt": "Contenção Aérea",
+   "ru": "Воздушные оковы"
+  },
+  "1803240": {
+   "de": "Fokus",
+   "en": "Watch",
+   "es": "Observación",
+   "fr": "Observation",
+   "ja": "注視",
+   "ko": "주시",
+   "pt": "Observação",
+   "ru": "Взор"
+  },
+  "1803400": {
+   "de": "Aura der Verzweiflung / Aura des Chaos",
+   "en": "Despairing Aura / Chaos Aura",
+   "es": "Energía de desesperación / Energía de caos",
+   "fr": "Aura du désespoir / Aura du chaos",
+   "ja": "絶望の気 / 混沌の気",
+   "ko": "절망의 기운 / 혼돈의 기운",
+   "pt": "Aura do Desespero / Aura do Caos",
+   "ru": "Аура отчаяния / Аура хаоса"
+  }
+ },
+ "seen": {
+  "1803170": "67-71% health, 2 s cast: all ten players hit in each of the 8 casts (9.9 on average)",
+  "1803450": "the hit of 1803170, at the same moment",
+  "1803451": "46-49% health, no cast time: 9 of 10 players hit on average",
+  "1803250": "76-78% health, 1.5 s cast: 4.6 players hit on average, 9 stuns in 8 casts",
+  "1803130": "62-65% health, 1.5 s cast: 5.2 players hit on average, 5 knocked down in 4 casts",
+  "1803210": "75-81% health, 2 s cast: what it places throws players up (Airborne), 23 times in 16 casts",
+  "1803240": "83-84% health, 1.5 s cast: puts Watch on a player (8 of 11 casts)",
+  "1803400": "17-32% health, 2.5 s cast: Despairing Aura on 14 and Chaos Aura on 5 players over 5 casts"
+ }
+}

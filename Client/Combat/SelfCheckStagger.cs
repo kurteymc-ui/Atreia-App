@@ -235,7 +235,7 @@ public static class SelfCheckStagger
         StaggerReport st = StaggerCredit.Build(bar, hits, t0);
 
         // Ludra's Isolation Specialist Rahu: its 4,500 bar broken, full again, then a 15 s cast during which nothing comes off it - no check of its own
-        var rahuBar = new List<StaggerEvent> { new(t0, boss, 4500, 4500, false), new(t0.AddSeconds(5), boss, 4495, 4500, false), new(t0.AddSeconds(100), boss, 0, 0, true),
+        var rahuBar = new List<StaggerEvent> { new(t0, boss, 4500, 4500, false), new(t0.AddSeconds(5), boss, 2950, 4500, false), new(t0.AddSeconds(100), boss, 0, 0, true),
             new(t0.AddSeconds(108), boss, 4500, 4500, false), new(t0.AddSeconds(126), boss, 4500, 4500, false) };
         var rahuCast = new List<WindupRecord> { new(t0.AddSeconds(108.4), boss, 1802900, 1, 15000, 0, 0, 0, false) };
         var rahu = StaggerChecks.Find(boss, rahuBar, rahuCast, Array.Empty<DamageEvent>(), t0.AddSeconds(160));
@@ -244,6 +244,32 @@ public static class SelfCheckStagger
         bool families = st.Of(1)?.Amount == 50 && st.Of(2)?.Amount == 100 && st.Total == 150 && st.ExactPercent > 99.9 && st.Hits.All(h => !h.Boosted);
         Console.WriteLine($"  -> a skill's form goes by its family, a bar that changes size is no drop, a Cleric's hit is never boosted: {families} " +
             $"(player 1 {st.Of(1)?.Amount}, player 2 {st.Of(2)?.Amount}, total {st.Total}, exact {st.ExactPercent:0.#}%, boosted {st.Hits.Count(h => h.Boosted)})");
-        return families && rahuOne;
+
+        // Eternal Ludra (the owner's twelve pulls of 7 November 2026): the 5,625 bar full from the pull, broken by the game after Purple Bolt with nothing
+        // taken off; full again 10 s later, 7 and 8 off it at once and back to full, broken again after Ludra's Trial; full once more until the wipe -
+        // no check at all (it was "broken" ones nobody had a part in, and an "ended" one with all of it left)
+        var ludraBar = new List<StaggerEvent> { new(t0, boss, 5625, 5625, false), new(t0.AddSeconds(145), boss, 5625, 5625, false), new(t0.AddSeconds(145.1), boss, 0, 0, true),
+            new(t0.AddSeconds(155.2), boss, 5625, 5625, false), new(t0.AddSeconds(155.3), boss, 5618, 5625, false), new(t0.AddSeconds(155.4), boss, 5617, 5625, false),
+            new(t0.AddSeconds(155.5), boss, 5625, 5625, false), new(t0.AddSeconds(312), boss, 5625, 5625, false), new(t0.AddSeconds(312.1), boss, 0, 0, true),
+            new(t0.AddSeconds(322.2), boss, 5625, 5625, false) };
+        var ludraCasts = new List<WindupRecord> { new(t0.AddSeconds(200), boss, 1803390, 1, 3000, 0, 0, 0, false), new(t0.AddSeconds(440), boss, 1803030, 1, 5000, 0, 0, 0, false) };
+        var ludra = StaggerChecks.Find(boss, ludraBar, ludraCasts, Array.Empty<DamageEvent>(), t0.AddSeconds(470));
+        bool ludraNone = ludra.Count == 0;
+        Console.WriteLine($"  -> Eternal Ludra's bar, broken by the game with nothing taken off, is no check: {ludraNone} ({string.Join(", ", ludra.Select(c => c.Outcome + " " + c.Left))})");
+
+        // Ludra's attacks the game calls only "Attack" named after what they did (assets/aion2/bosses/mechanic_names.json), in the player's language; the
+        // ones the game names keep its name; the data model's name stays the game's
+        string before = Aion2.Protocol.Aion2SkillNames.Language;
+        Aion2.Protocol.Aion2SkillNames.Language = "de";
+        bool german = Aion2.Protocol.Aion2SkillNames.DisplayOf(1803170) == "Trifft alle" && Aion2.Protocol.Aion2SkillNames.DisplayOf(1803210) == "Luftbann";
+        Aion2.Protocol.Aion2SkillNames.Language = "zh";
+        bool fallback = Aion2.Protocol.Aion2SkillNames.DisplayOf(1803250) == "Stun";
+        Aion2.Protocol.Aion2SkillNames.Language = "en";
+        bool named = Aion2.Protocol.Aion2SkillNames.DisplayOf(1803170) == "Hits everyone" && Aion2.Protocol.Aion2SkillNames.DisplayOf(1803400) == "Despairing Aura / Chaos Aura"
+            && Aion2.Protocol.Aion2SkillNames.DisplayOf(1803040) == "Ludra's Trial" && Aion2.Protocol.Aion2SkillNames.NameOf(1803170) == "Attack";
+        Aion2.Protocol.Aion2SkillNames.Language = before;
+        bool names = german && fallback && named;
+        Console.WriteLine($"  -> Ludra's attacks named after what they do (de {german}, a language without names falls back to English {fallback}, en and the game's own {named})");
+        return families && rahuOne && ludraNone && names;
     }
 }
