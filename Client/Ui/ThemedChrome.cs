@@ -135,50 +135,11 @@ public static class ThemedChrome
         window.Content = frame;
 
         // Opened in the middle of the meter, a tall window went past the bottom of the screen when the meter sat low (4 November 2026: the tools window
-        // with the design editor - its lower part, scroll bar included, could not be reached until the window was made smaller by hand).
+        // with the design editor - its lower part, scroll bar included, could not be reached until the window was made smaller by hand). ScreenFit does the
+        // same for every ordinary window; this one is fitted whatever kind it is.
         window.Loaded += (_, _) => FitOnScreen(window);
     }
 
-    /// <summary>Brings a window wholly onto the work area of the monitor it mostly lies on: smaller when it is larger than that area, then moved in.</summary>
-    public static void FitOnScreen(Window window)
-    {
-        if (window.WindowState != WindowState.Normal || !double.IsFinite(window.Left) || !double.IsFinite(window.Top))
-        {
-            return;
-        }
-
-        double width = window.ActualWidth > 0 ? window.ActualWidth : window.Width, height = window.ActualHeight > 0 ? window.ActualHeight : window.Height;
-        if (!double.IsFinite(width) || !double.IsFinite(height) || width <= 0 || height <= 0)
-        {
-            return;
-        }
-
-        Rect area = WindowPlacement.WorkAreaOf(new Rect(window.Left, window.Top, width, height));
-        if (area.Width <= 0 || area.Height <= 0)
-        {
-            return;
-        }
-
-        if (height > area.Height + 0.5)
-        {
-            window.Height = height = area.Height;
-        }
-
-        if (width > area.Width + 0.5)
-        {
-            window.Width = width = area.Width;
-        }
-
-        double left = Math.Max(area.Left, Math.Min(window.Left, area.Right - width));
-        double top = Math.Max(area.Top, Math.Min(window.Top, area.Bottom - height));
-        if (Math.Abs(left - window.Left) > 0.5)
-        {
-            window.Left = left;
-        }
-
-        if (Math.Abs(top - window.Top) > 0.5)
-        {
-            window.Top = top;
-        }
-    }
+    /// <summary>Brings a window wholly onto the work area of the monitor it mostly lies on (see <see cref="ScreenFit.FitOnScreen"/>).</summary>
+    public static void FitOnScreen(Window window) => ScreenFit.FitOnScreen(window);
 }

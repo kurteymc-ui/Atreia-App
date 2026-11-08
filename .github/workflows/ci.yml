@@ -25,26 +25,22 @@ jobs:
       - name: Self-checks
         shell: pwsh
         timeout-minutes: 20
-        run: |
-          $dir = (Resolve-Path out).Path
-          $p = Start-Process -FilePath (Join-Path $dir 'A2HMeter.exe') -ArgumentList @('selftest') -WorkingDirectory $dir -Wait -PassThru `
-            -RedirectStandardOutput selftest.txt -RedirectStandardError selftest-errors.txt
-          Get-Content selftest.txt
-          $errors = Get-Content selftest-errors.txt -ErrorAction SilentlyContinue
-          if ($errors) { "--- errors ---"; $errors }
-          if ($p.ExitCode -ne 0 -or -not (Select-String -Path selftest.txt -SimpleMatch '[selftest] ALL CHECKS PASSED' -Quiet)) {
-            $lines = Get-Content selftest.txt
-            $shown = 0
-            for ($i = 0; $i -lt $lines.Count -and $shown -lt 25; $i++) {
-              if ($lines[$i] -match '\bFalse\b') {
-                # the scenario's heading (the last "[selftest]" line above it) and the failed line
-                $head = ''
-                for ($j = $i; $j -ge 0; $j--) { if ($lines[$j] -like '[[]selftest]*') { $head = $lines[$j]; break } }
-                "::error title=Self-check failed::$head $($lines[$i].Trim())"
-                $shown++
-              }
-            }
-            if ($errors) { "::error title=Self-check crashed::$(($errors | Select-Object -First 3) -join ' | ')" }
-            "::error::The self-checks failed (exit $($p.ExitCode))."
-            exit 1
-          }
+        run: pwsh Tools/release/selftest.ps1 -Dir out
+
+  release-layout:
+    name: Release layout
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      # Published the way a release is (the .NET runtime in its own folder, no language folders of .NET's), then the same checks run in it, and that it
+      # ran on its own runtime and not the one installed on the machine.
+      - name: Publish like a release
+        shell: pwsh
+        run: pwsh Tools/release/publish.ps1 -Version 1.0.0 -Out publish
+      - name: Self-checks in the release layout
+        shell: pwsh
+        timeout-minutes: 20
+        run: pwsh Tools/release/selftest.ps1 -Dir publish -Runtime

@@ -51,8 +51,13 @@ jobs:
         # valid "1.0.0" rather than failing the MSI build entirely.
         #
         # A tag with a suffix ("v1.0.0-alpha.1") is a pre-release for testers: it is packed under its full
-        # semantic version on its own Velopack channel ("alpha"), so installed stable clients (channel
-        # "win") never see it as an update, it is never marked "Latest", and the final 1.0.0 stays free.
+        # semantic version on its own Velopack channel ("test"), so installed stable clients (channel
+        # "stable") never see it as an update, it is never marked "Latest", and the final 1.0.0 stays free.
+        #
+        # Every release is packed twice (8 November 2026: the install moved from %LOCALAPPDATA%\A2HMeter to
+        # %LOCALAPPDATA%\AtreiaApp, see Client/Update/InstallMove.cs): as "AtreiaApp" on the channels "stable"/"test"
+        # (the installer and every new install), and the same build as "A2HMeter" on the old channels "win"/"alpha",
+        # so an install in the old folder still finds the update that moves it.
         run: |
           version="${TAG#v}"
           full="$version"
@@ -60,11 +65,13 @@ jobs:
           echo "number=$version" >> "$GITHUB_OUTPUT"
           if [ "$full" != "$version" ]; then
             echo "pack=$full" >> "$GITHUB_OUTPUT"
-            echo "channel=alpha" >> "$GITHUB_OUTPUT"
+            echo "channel=test" >> "$GITHUB_OUTPUT"
+            echo "oldchannel=alpha" >> "$GITHUB_OUTPUT"
             echo "pre=true" >> "$GITHUB_OUTPUT"
           else
             echo "pack=$version" >> "$GITHUB_OUTPUT"
-            echo "channel=win" >> "$GITHUB_OUTPUT"
+            echo "channel=stable" >> "$GITHUB_OUTPUT"
+            echo "oldchannel=win" >> "$GITHUB_OUTPUT"
             echo "pre=false" >> "$GITHUB_OUTPUT"
           fi
         env:
@@ -75,39 +82,26 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Publish AionDPS (win-x64, self-contained)
-        run: >
-          dotnet publish Client/AionDPS.csproj -c Release -r win-x64 --self-contained true
-          -p:PublishSingleFile=false -p:Version=${{ steps.version.outputs.number }} -o publish
+      # The release's layout (Tools/release/publish.ps1): the app and its libraries, assets\, licenses\, and the .NET runtime in runtime\.
+      - name: Publish Atreia App (win-x64)
+        shell: pwsh
+        run: pwsh Tools/release/publish.ps1 -Version ${{ steps.version.outputs.number }} -Out publish
 
-      # The app's own checks (recorded game frames, no game or Npcap needed). A failed check fails this job and with it the release: nothing is packed or attached; each failed line becomes an
-      # error on the run's page, so a red run says which check broke.
+      # The app's own checks (recorded game frames, no game or Npcap needed), in the published folder, and that it ran on the .NET in its runtime folder.
+      # A failed check fails this job and with it the release: nothing is packed or attached; each failed line becomes an error on the run's page, so a
+      # red run says which check broke.
       - name: Self-checks
         shell: pwsh
         timeout-minutes: 20
+        run: pwsh Tools/release/selftest.ps1 -Dir publish -Runtime
+
+      # The same build for installs still in the old folder, with the exe under its old name (their shortcuts and the updater start A2HMeter.exe).
+      # The exe finds AtreiaApp.dll and runtime\ by itself, whatever it is called.
+      - name: Copy for the old install folder
+        shell: pwsh
         run: |
-          $dir = (Resolve-Path publish).Path
-          $p = Start-Process -FilePath (Join-Path $dir 'A2HMeter.exe') -ArgumentList @('selftest') -WorkingDirectory $dir -Wait -PassThru `
-            -RedirectStandardOutput selftest.txt -RedirectStandardError selftest-errors.txt
-          Get-Content selftest.txt
-          $errors = Get-Content selftest-errors.txt -ErrorAction SilentlyContinue
-          if ($errors) { "--- errors ---"; $errors }
-          if ($p.ExitCode -ne 0 -or -not (Select-String -Path selftest.txt -SimpleMatch '[selftest] ALL CHECKS PASSED' -Quiet)) {
-            $lines = Get-Content selftest.txt
-            $shown = 0
-            for ($i = 0; $i -lt $lines.Count -and $shown -lt 25; $i++) {
-              if ($lines[$i] -match '\bFalse\b') {
-                # the scenario's heading (the last "[selftest]" line above it) and the failed line
-                $head = ''
-                for ($j = $i; $j -ge 0; $j--) { if ($lines[$j] -like '[[]selftest]*') { $head = $lines[$j]; break } }
-                "::error title=Self-check failed::$head $($lines[$i].Trim())"
-                $shown++
-              }
-            }
-            if ($errors) { "::error title=Self-check crashed::$(($errors | Select-Object -First 3) -join ' | ')" }
-            "::error::The self-checks failed (exit $($p.ExitCode)): no installer is built or attached for this tag."
-            exit 1
-          }
+          Copy-Item publish publish-old -Recurse
+          Rename-Item publish-old/AtreiaApp.exe A2HMeter.exe
 
       - name: Install the Velopack CLI
         run: dotnet tool install --global vpk --version 1.2.0
@@ -129,32 +123,55 @@ jobs:
           --channel ${{ steps.version.outputs.channel }} --pre true --token $env:GH_TOKEN --outputDir releases
         shell: pwsh
 
-      # Produces, in "releases": the installer (A2HMeter-win-Setup.exe, renamed below), a full .nupkg, a
-      # delta .nupkg when a previous release was fetched above, and releases.win.json -- the index
+      - name: Fetch the previous release of the old install folder (for delta packages)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          vpk download github
+          --repoUrl https://github.com/${{ github.repository }}
+          --channel ${{ steps.version.outputs.oldchannel }} --pre true --token $env:GH_TOKEN --outputDir releases-old
+        shell: pwsh
+
+      # Produces, in "releases": the installer (AtreiaApp-stable-Setup.exe, renamed below), a full .nupkg, a
+      # delta .nupkg when a previous release was fetched above, and releases.stable.json -- the index
       # the installed app reads to discover updates. Velopack's GithubSource resolves all of them
-      # by asset name from the GitHub release, so they must be attached to it.
+      # by asset name from the GitHub release, so they must be attached to it. The package id is the
+      # folder the app installs into: %LOCALAPPDATA%\AtreiaApp.
       - name: Build the Velopack release
         run: >
           vpk pack
-          --packId A2HMeter
+          --packId AtreiaApp
           --packTitle "Atreia App"
           --packAuthors "Atreia"
           --packVersion ${{ steps.version.outputs.pack }}
           --packDir publish
-          --mainExe "A2HMeter.exe"
+          --mainExe "AtreiaApp.exe"
           --icon Client/assets/app/aiondps.ico
           --channel ${{ steps.version.outputs.channel }}
           --outputDir releases
 
-      # The installer is named after the app (Atreia-App-Setup.exe; a test release: Atreia-App-alpha-Setup.exe). The packId, the
-      # .nupkg files and the exe stay A2HMeter: installed apps find their updates by them, and the install keeps its place.
+      # The same build for installs in %LOCALAPPDATA%\A2HMeter, on their old channel (releases.win.json): they update to it as
+      # always, and it moves them to the new folder (Client/Update/InstallMove.cs). Its own installer and portable zip are not
+      # attached: new installs only come from the one above.
+      - name: Build the Velopack release for the old install folder
+        shell: pwsh
+        run: |
+          vpk pack --packId A2HMeter --packTitle "Atreia App" --packAuthors "Atreia" --packVersion ${{ steps.version.outputs.pack }} `
+            --packDir publish-old --mainExe "A2HMeter.exe" --icon Client/assets/app/aiondps.ico `
+            --channel ${{ steps.version.outputs.oldchannel }} --outputDir releases-old
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-ChildItem releases-old -File | Where-Object { $_.Name -like '*-Setup.exe' -or $_.Name -like '*-Portable.zip' } | Remove-Item
+
+      # The installer is named after the app (Atreia-App-Setup.exe; a test release: Atreia-App-test-Setup.exe). The installed
+      # app in the old folder fetches it by this name to move (Client/Update/InstallMove.cs).
       - name: Name the installer after the app
         id: installer
         shell: bash
         run: |
           ch="${{ steps.version.outputs.channel }}"
-          name=$([ "$ch" = "win" ] && echo "Atreia-App-Setup.exe" || echo "Atreia-App-$ch-Setup.exe")
-          mv "releases/A2HMeter-$ch-Setup.exe" "releases/$name"
+          name=$([ "$ch" = "stable" ] && echo "Atreia-App-Setup.exe" || echo "Atreia-App-$ch-Setup.exe")
+          mv "releases/AtreiaApp-$ch-Setup.exe" "releases/$name"
           echo "path=releases/$name" >> "$GITHUB_OUTPUT"
 
       # Scans the installer with VirusTotal before anything is attached to the release. Skipped when
@@ -235,10 +252,13 @@ jobs:
           }
           # SHA-256 of the installer and the update packages, so a download can be checked (Get-FileHash on Windows, sha256sum elsewhere).
           # The list is written before the upload and goes up with the rest; the installer's hash is also put into the release notes (once).
-          $sumFiles = Get-ChildItem releases -File | Where-Object { $_.Name -like '*.exe' -or $_.Name -like '*.nupkg' } | Sort-Object Name
+          # Both packs go up: the new one and the one for installs in the old folder (only files of this version from there:
+          # the previous release fetched for its deltas is attached to that release already).
+          $old = @(Get-ChildItem releases-old -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -ne '.nupkg' -or $_.Name -like '*-${{ steps.version.outputs.pack }}-*' })
+          $sumFiles = @(Get-ChildItem releases -File) + @($old) | Where-Object { $_.Name -like '*.exe' -or $_.Name -like '*.nupkg' } | Sort-Object Name
           $sums = ($sumFiles | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)" }) -join "`n"
           [System.IO.File]::WriteAllText((Join-Path (Resolve-Path releases).Path 'SHA256SUMS.txt'), "$sums`n")
-          $files = Get-ChildItem releases -File | Where-Object { $_.Name -notlike '*-Portable.zip' }
+          $files = @(Get-ChildItem releases -File | Where-Object { $_.Name -notlike '*-Portable.zip' }) + @($old)
           gh release upload "${{ steps.tag.outputs.name }}" $files.FullName --clobber
           # The release notes always have the same shape (Tools/changelog/release-notes.mjs): what changed, the link to the
           # full changelog and an installer block with the SHA-256 and the VirusTotal result. A re-run writes the same text again.

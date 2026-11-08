@@ -22819,5 +22819,53 @@
   "Cubes.OnlyKeyTip": {
     "en": "The note, the sounds, the meter's line and the map coming up only while your character has a Hidden Cube key in its bag. The cube still shows on the map. Until the app has seen your bag (at your login), the alerts come as usual.",
     "de": "Hinweis, Töne, die Zeile des Meters und die aufklappende Karte nur, solange dein Charakter einen Schlüssel für Versteckte Kuben im Inventar hat. Der Kubus bleibt auf der Karte. Bis die App dein Inventar gesehen hat (beim Login), kommen die Hinweise wie gewohnt."
+  },
+  "Move.Title": {
+    "en": "Atreia App is moving",
+    "de": "Atreia App zieht um",
+    "fr": "Atreia App déménage",
+    "es": "Atreia App se muda",
+    "ru": "Atreia App переезжает",
+    "zh": "Atreia App 正在迁移",
+    "zh-TW": "Atreia App 正在搬移",
+    "pt": "O Atreia App está mudando de pasta",
+    "ja": "Atreia App の移動",
+    "ko": "Atreia App 이동"
+  },
+  "Move.Text": {
+    "en": "{0} now installs in its own folder, AtreiaApp, instead of A2HMeter. The new version is downloaded.\n\nWhen the meter closes, it is installed there and starts again by itself. Your settings, characters and history stay as they are.",
+    "de": "{0} wird jetzt in einen eigenen Ordner installiert, AtreiaApp statt A2HMeter. Die neue Version ist heruntergeladen.\n\nSobald der Meter geschlossen wird, wird sie dort installiert und startet von selbst neu. Deine Einstellungen, Charaktere und dein Verlauf bleiben, wie sie sind.",
+    "fr": "{0} s'installe désormais dans son propre dossier, AtreiaApp, au lieu d'A2HMeter. La nouvelle version est téléchargée.\n\nÀ la fermeture du compteur, elle y est installée et redémarre d'elle-même. Tes réglages, personnages et historique restent tels quels.",
+    "es": "{0} ahora se instala en su propia carpeta, AtreiaApp, en lugar de A2HMeter. La nueva versión ya está descargada.\n\nAl cerrar el medidor, se instala allí y se vuelve a abrir sola. Tus ajustes, personajes e historial se quedan como están.",
+    "ru": "{0} теперь устанавливается в собственную папку AtreiaApp вместо A2HMeter. Новая версия уже загружена.\n\nКогда метр закроется, она установится туда и запустится сама. Настройки, персонажи и история останутся как есть.",
+    "zh": "{0} 现在安装到自己的文件夹 AtreiaApp，而不是 A2HMeter。新版本已下载。\n\n关闭统计器后，它会安装到那里并自动重新启动。你的设置、角色和历史记录保持不变。",
+    "zh-TW": "{0} 現在安裝到自己的資料夾 AtreiaApp，而不是 A2HMeter。新版本已下載。\n\n關閉統計器後，會安裝到那裡並自動重新啟動。你的設定、角色和歷史紀錄保持不變。",
+    "pt": "O {0} agora é instalado na própria pasta, AtreiaApp, em vez de A2HMeter. A nova versão já foi baixada.\n\nQuando o medidor fechar, ela é instalada lá e abre de novo sozinha. Suas configurações, personagens e histórico continuam como estão.",
+    "ja": "{0} は A2HMeter ではなく専用フォルダー AtreiaApp にインストールされるようになりました。新しいバージョンはダウンロード済みです。\n\nメーターを閉じるとそこにインストールされ、自動で再起動します。設定、キャラクター、履歴はそのまま残ります。",
+    "ko": "{0}는 이제 A2HMeter 대신 전용 폴더 AtreiaApp에 설치됩니다. 새 버전은 다운로드되었습니다.\n\n미터를 닫으면 그곳에 설치되고 자동으로 다시 시작됩니다. 설정, 캐릭터, 기록은 그대로 유지됩니다."
+  },
+  "Move.Now": {
+    "en": "Close and move now",
+    "de": "Jetzt schließen und umziehen",
+    "fr": "Fermer et déménager",
+    "es": "Cerrar y mudar ahora",
+    "ru": "Закрыть и переехать",
+    "zh": "立即关闭并迁移",
+    "zh-TW": "立即關閉並搬移",
+    "pt": "Fechar e mudar agora",
+    "ja": "今すぐ閉じて移動",
+    "ko": "지금 닫고 이동"
+  },
+  "Move.Later": {
+    "en": "When I close it",
+    "de": "Wenn ich ihn schließe",
+    "fr": "À la fermeture",
+    "es": "Cuando lo cierre",
+    "ru": "Когда я закрою",
+    "zh": "等我关闭时",
+    "zh-TW": "等我關閉時",
+    "pt": "Quando eu fechar",
+    "ja": "閉じたときに",
+    "ko": "닫을 때"
   }
 }
