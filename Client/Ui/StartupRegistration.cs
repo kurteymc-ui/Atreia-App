@@ -23,6 +23,17 @@ internal static class StartupRegistration
         return key?.GetValue(ValueName) is string value && value.Length > 0;
     }
 
+    /// <summary>An entry written by the install in <paramref name="oldFolder"/> (the move to %LOCALAPPDATA%\AtreiaApp, Update/InstallMove) starts this copy
+    /// from now on; an entry pointing anywhere else is left alone.</summary>
+    public static void Repoint(string oldFolder)
+    {
+        using RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: false);
+        if (key?.GetValue(ValueName) is string value && value.Contains(oldFolder, StringComparison.OrdinalIgnoreCase))
+        {
+            SetEnabled(true);
+        }
+    }
+
     public static void SetEnabled(bool enabled)
     {
         using RegistryKey key = Registry.CurrentUser.CreateSubKey(RunKeyPath, writable: true);

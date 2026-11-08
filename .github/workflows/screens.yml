@@ -28,7 +28,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory screens | Out-Null
-          $exe = (Resolve-Path out/A2HMeter.exe).Path
+          $exe = (Resolve-Path out/AtreiaApp.exe).Path
           $shots = @(
             @('render-overlay', 'window.png', 'window'),
             @('render-overlay', 'compact.png', 'compact'),

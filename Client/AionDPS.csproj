@@ -26,7 +26,9 @@
          any of the three things above), but per the user that leftover had to go too - every
          `namespace AionSniffer.*`/`using AionSniffer.*` in the project was renamed to AionDPS to
          match. -->
-    <AssemblyName>A2HMeter</AssemblyName>
+    <!-- 8 November 2026, the owner: the app installs under its own name, so the exe is AtreiaApp.exe (it was A2HMeter.exe). The copy packed for the old
+         install folder gets the exe under its old name (release.yml), so that install's shortcuts keep working until it has moved (Update/InstallMove.cs). -->
+    <AssemblyName>AtreiaApp</AssemblyName>
     <Product>Atreia App</Product>
     <AssemblyTitle>Atreia App</AssemblyTitle>
     <!-- asInvoker: the meter reads network traffic through the Npcap driver, which the user installs
@@ -41,6 +43,18 @@
          workflow was triggered by, so a build can always be identified from a screenshot. Keep in
          step with the release tag. -->
     <Version>1.20.1</Version>
+    <!-- Only the app's own languages (assets/i18n): without this, .NET's own message translations come as thirteen folders (cs, de, es, fr, it, ja, ko,
+         pl, pt-BR, ru, tr, zh-Hans, zh-Hant) next to the exe, which read like the app's languages but are not. -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <!-- The release's layout (Tools/release/publish.ps1, -p:ReleaseLayout=true): the .NET runtime in a "runtime" folder of its own instead of some 280 files
+       loose next to the exe. The app is published framework-dependent and its exe looks for .NET only in that folder (never in one installed on the PC),
+       so it always runs on the runtime it was tested with. A plain build (dotnet build, the checks) is not touched by this. -->
+  <PropertyGroup Condition="'$(ReleaseLayout)' == 'true'">
+    <SelfContained>false</SelfContained>
+    <AppHostDotNetSearch>AppRelative</AppHostDotNetSearch>
+    <AppHostRelativeDotNet>runtime</AppHostRelativeDotNet>
   </PropertyGroup>
 
   <!-- UseWindowsForms's own implicit-usings set adds a PROJECT-WIDE global "using
@@ -79,13 +93,13 @@
   <ItemGroup>
     <!-- The faces of atreia.app (see Fonts/OFL.txt), compiled in: A2H Sans for all text, Cinzel for titles (ThemeManager.SetFonts). -->
     <Resource Include="Fonts\*.ttf" />
-    <None Include="Fonts\OFL.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Fonts\OFL.txt" Link="licenses\OFL-fonts.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The app's license and the notices of the parts from other projects, shipped next to the exe. -->
-    <None Include="..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The app's license, the notices of the parts from other projects and the fonts' license, together in "licenses" next to the exe. -->
+    <None Include="..\LICENSE" Link="licenses\LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\THIRD-PARTY-NOTICES.md" Link="licenses\THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

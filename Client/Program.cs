@@ -578,13 +578,30 @@ internal static class Program
                 Ui.MeterSettings startupSettings = Ui.MeterSettings.Load();
                 Ui.AudioOutput.DeviceId = startupSettings.AudioDeviceId;
                 Ui.ThemeManager.Apply(app, startupSettings);
+                // Every window fits on the screen it opens on, from 1280 x 720 to 4K and ultrawide, and again when the screens change (Ui/ScreenFit).
+                Ui.ScreenFit.Install(app.Dispatcher);
                 var mainWindow = new Ui.MainWindow();
+                // The install's move to %LOCALAPPDATA%\AtreiaApp (Update/InstallMove): the old folder's copy fetches the new installer once its window is
+                // up; the new install removes what is left of the old one.
+                mainWindow.Loaded += async (_, _) =>
+                {
+                    try
+                    {
+                        await AionDPS.Update.InstallMove.OfferAsync(mainWindow);
+                    }
+                    catch (Exception)
+                    {
+                        // tried again at the next start
+                    }
+                };
+                _ = Task.Run(AionDPS.Update.InstallMove.CleanUpOldInstall);
                 // Closing the meter's window ends the meter, even while an overlay or another window of it is still open; otherwise it kept running
                 // without a window, and starting it again found that hidden copy instead of opening.
                 app.ShutdownMode = System.Windows.ShutdownMode.OnMainWindowClose;
                 SingleInstance.ListenForShow(mainWindow);
                 started = true;
                 app.Run(mainWindow);
+                AionDPS.Update.InstallMove.RunIfReady();
             }
             catch (Exception ex)
             {
